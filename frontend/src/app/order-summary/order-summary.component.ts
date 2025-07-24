@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 import { OrderSummaryService, OrderSummary } from '../services/order-summary.service';
+import { TitleUppercasePipe } from '../pipes/title-uppercase.pipe';
+import { WeightPipe } from '../pipes/weight.pipe';
 import { OrderItem } from '../services/order.service';
-
 import { OrderService } from '../services/order.service';
 import { OrderDetailsComponent } from '../child-components/order-details.component';
 import { ShippingInfoComponent } from '../child-components/shipping-info.component';
@@ -28,32 +29,33 @@ export class OrderSummaryComponent implements OnInit {
   orderSummary$: Observable<OrderSummary>;
 
   newOrder = {
-    customer_name: '',
-    price: 0,
-    tax: 0,
-    shipping: {
-      carrier: '',
-      cost: 0,
-      address: {
-        name: '',
-        phone: '',
-        address_line1: '',
-        city_locality: '',
-        state_province: '',
-        postal_code: '',
-        country_code: ''
-      }
-    },
-    items: [
-      {
-        id: 1,
-        name: 'Default Product',
-        price: 0,
-        qty: 1,
-        weight: 1
-      }
-    ] as OrderItem[]
-  };
+      customer_name: '',
+      price: 0,
+      tax: 0,
+      shipping: {
+        carrier: '',
+        cost: 0,
+        address: {
+          name: '',
+          phone: '',
+          address_line1: '',
+          city_locality: '',
+          state_province: '',
+          postal_code: '',
+          country_code: ''
+        }
+      },
+      items: [
+        {
+          id: 1,
+          name: 'Default Product',
+          price: 0,
+          qty: 1,
+          weight: 1
+        }
+      ]
+    };
+
 
   orders: any[] = [];
 
@@ -109,7 +111,7 @@ export class OrderSummaryComponent implements OnInit {
       .then(data => {
         this.orders = data;
       })
-      .catch(err => console.error('Fetching error:', err));
+      .catch(err => console.error('Taking error:', err));
   }
 
   resetForm() {
