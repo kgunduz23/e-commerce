@@ -14,26 +14,46 @@ const pool = new Pool({
   port: 5432
 });
 
-app.get('/shipping', (req, res) => {
-  const weight = parseFloat(req.query.weight);
-  const cost = weight * 2; // Basit hesaplama
-
-  res.json({
-    shipping: {
-      carrier: 'UPS',
-      address: {
-        name: 'Default Name',
-        phone: '123456789',
-        address_line1: 'Shipping St. 123',
-        city_locality: 'Istanbul',
-        state_province: 'TR',
-        postal_code: '34000',
-        country_code: 'TR'
-      },
-      cost: cost
-    }
-  });
+let latestShipping = null;
+app.post('/shipping', (req, res) => {
+  latestShipping = req.body;
+  res.json({ message: 'Shipping info received', shipping: latestShipping });
 });
+
+app.get('/shipping', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT carrier, name, phone, address_line1, city_locality, state_province, postal_code, country_code
+      FROM shipping
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No shipping info found in DB.' });
+    }
+
+    const shipping = {
+      carrier: result.rows[0].carrier,
+      name: result.rows[0].name,
+      address: {
+        phone: result.rows[0].phone,
+        address_line1: result.rows[0].address_line1,
+        city_locality: result.rows[0].city_locality,
+        state_province: result.rows[0].state_province,
+        postal_code: result.rows[0].postal_code,
+        country_code: result.rows[0].country_code
+      }
+    };
+
+    res.json({ shipping });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch shipping info from DB.' });
+  }
+});
+
+
 
 app.post('/orders', async (req, res) => {
   const { customer_name, total_amount, tax, shipping } = req.body;
@@ -52,19 +72,18 @@ app.post('/orders', async (req, res) => {
 
     await client.query(
       `INSERT INTO shipping 
-        (order_id, carrier, name, phone, address_line1, city_locality, state_province, postal_code, country_code, cost)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        (order_id, carrier, name, phone, address_line1, city_locality, state_province, postal_code, country_code)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [
         orderId,
         shipping.carrier,
-        shipping.address.name,
+        shipping.name,
         shipping.address.phone,
         shipping.address.address_line1,
         shipping.address.city_locality,
         shipping.address.state_province,
         shipping.address.postal_code,
         shipping.address.country_code,
-        shipping.cost
       ]
     );
 
@@ -118,6 +137,9 @@ app.get('/tax', async (req, res) => {
     res.status(500).send('Tax fetch error');
   }
 });
+
+
+
 
 app.listen(3000, () => {
   console.log('✅ Server running on http://localhost:3000');
