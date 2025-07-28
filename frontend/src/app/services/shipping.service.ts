@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { baseApiUrl } from '../../env';
+
 
 export interface ShippingInfo {
   carrier: string;
+  name:string
   address: {
-    name: string;
     phone: string;
     address_line1: string;
     city_locality: string;
@@ -13,18 +15,19 @@ export interface ShippingInfo {
     postal_code: string;
     country_code: string;
   };
-  cost: number;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ShippingService {
-  private apiUrl = 'http://localhost:3000/shipping';
+  private apiUrl = `${baseApiUrl}/shipping`;
 
   constructor(private http: HttpClient) {}
 
-  getShipping(weight: number): Observable<{ shipping: ShippingInfo }> {
-    return this.http.get<{ shipping: ShippingInfo }>(`${this.apiUrl}?weight=${weight}`);
-  }
+  postShipping(shippingData: any): Observable<any> {
+  return this.http.post(`${baseApiUrl}/shipping`, shippingData);
+}
+
+
 }

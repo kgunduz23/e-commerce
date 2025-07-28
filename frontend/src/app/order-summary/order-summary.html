@@ -1,27 +1,58 @@
-<h2>Add New Order</h2>
-<form (ngSubmit)="submitOrder()" #orderForm="ngForm">
-  <label>Name:</label>
-  <input type="text" name="customer_name" [(ngModel)]="newOrder.customer_name" required /><br />
+<h3 style="text-align: center;">Add New Order</h3>
 
-  <label>Price:</label>
-  <input type="number" name="price" [(ngModel)]="newOrder.price" required /><br />
+<form (ngSubmit)="submitOrder()" style="width: 500px; margin: auto;">
 
-  <label>Tax (%):</label>
-  <input type="number" name="tax" [(ngModel)]="newOrder.tax" required /><br />
+  <app-shipping-info [shipping]="newOrder.shipping"></app-shipping-info>
 
-  <label>Cargo Price:</label>
-  <input type="number" name="shipping_cost" [(ngModel)]="newOrder.shipping_cost" required /><br />
+  <app-tax-info [tax]="{ amount: 0.1 }"></app-tax-info>
 
-  <button type="submit">Add Order</button>
+  <h4 style="margin-top: 20px;">Order Items</h4>
+  <div *ngFor="let item of newOrder.items; let i = index" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+    <div class="form-group">
+      <label>Name:</label>
+      <input [(ngModel)]="item.name" name="item_name_{{i}}" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>Quantity:</label>
+      <input [(ngModel)]="item.qty" name="item_qty_{{i}}" type="number" min="1" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>Price:</label>
+      <input [(ngModel)]="item.price" name="item_price_{{i}}" type="number" min="0" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>Shipping:</label>
+      <input [(ngModel)]="item.shipping" name="item_shipping_{{i}}" type="number" min="0" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>Weight:</label>
+      <input [(ngModel)]="item.weight" name="item_weight_{{i}}" type="number" min="0" required class="form-control" />
+    </div>
+  </div>
+
+  <button type="submit"
+    style="margin-top: 20px; background-color: green; color: white; border: none; padding: 10px 16px; border-radius: 5px; width: 100%;">
+    Add Order
+  </button>
 </form>
 
-<hr />
+<hr>
 
-<h3>Added Orders:</h3>
-<ul>
-  <li *ngFor="let order of orders">
-    {{ order.customer_name }} -
-    {{ order.total_amount | currency }} (Tax: {{ order.tax }}%, Shipping: {{ order.shipping_cost | currency }})
-    <button (click)="deleteOrder(order.id)">Delete</button>
+<h3 style="text-align: center;">Orders</h3>
+<ul style="list-style: none; padding: 0; width: 500px; margin: auto;">
+  <li *ngFor="let o of orders" style="background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+    <div>
+      <strong>{{ o.customer_name }}</strong><br>
+      Total: {{ o.total_amount | currency }}<br>
+      Tax: 10%<br>
+    </div>
+    <button (click)="deleteOrder(o.id)"
+      style="margin-top: 5px; background-color: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 3px;">
+      Delete
+    </button>
   </li>
 </ul>

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TaxInfo } from '../services/tax.service';
+import { TaxInfo } from '../../services/tax.service';
 
 @Component({
   selector: 'app-tax-info',
@@ -8,7 +8,8 @@ import { TaxInfo } from '../services/tax.service';
   imports: [CommonModule],
   template: `
     <h3>Tax Information</h3>
-    <div>Tax Rate: {{ tax.amount | percent }}</div>
+    <p>Tax Rate: {{ tax.amount * 100 }}%</p>
+
   `
 })
 export class TaxInfoComponent {

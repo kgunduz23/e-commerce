@@ -4,13 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 import { OrderSummaryService, OrderSummary } from '../services/order-summary.service';
-import { TitleUppercasePipe } from '../pipes/title-uppercase.pipe';
-import { WeightPipe } from '../pipes/weight.pipe';
-import { OrderItem } from '../services/order.service';
-import { OrderService } from '../services/order.service';
-import { OrderDetailsComponent } from '../child-components/order-details.component';
-import { ShippingInfoComponent } from '../child-components/shipping-info.component';
-import { TaxInfoComponent } from '../child-components/tax-info.component';
+import { OrderItem, OrderService } from '../services/order.service';
+import { OrderDetailsComponent } from './child-components/order-details.component';
+import { ShippingInfoComponent } from './child-components/shipping-info.component';
+import { TaxInfoComponent } from './child-components/tax-info.component';
+import { baseApiUrl } from '../../env';
 
 @Component({
   selector: 'app-order-summary',
@@ -27,43 +25,39 @@ import { TaxInfoComponent } from '../child-components/tax-info.component';
 })
 export class OrderSummaryComponent implements OnInit {
   orderSummary$: Observable<OrderSummary>;
+  orders: any[] = [];
 
   newOrder = {
-      customer_name: '',
-      price: 0,
-      tax: 0,
-      shipping: {
-        carrier: '',
-        cost: 0,
-        address: {
-          name: '',
-          phone: '',
-          address_line1: '',
-          city_locality: '',
-          state_province: '',
-          postal_code: '',
-          country_code: ''
-        }
-      },
-      items: [
-        {
-          id: 1,
-          name: 'Default Product',
-          price: 0,
-          qty: 1,
-          weight: 1
-        }
-      ]
-    };
-
-
-  orders: any[] = [];
+    tax: 10,
+    shipping: {
+      carrier: '',
+      name: '',
+      address: {
+        phone: '',
+        address_line1: '',
+        city_locality: '',
+        state_province: '',
+        postal_code: '',
+        country_code: ''
+      }
+    },
+    items: [
+      {
+        id: 1,
+        name: '',
+        price: 0,
+        qty: 1,
+        weight: 1,
+        shipping: 0
+      }
+    ] as OrderItem[]
+  };
 
   constructor(
     private summaryService: OrderSummaryService,
-    private orderService: OrderService
   ) {
-    this.orderSummary$ = this.summaryService.getOrderSummary();
+    this.orderSummary$ = this.summaryService.getOrderSummary(this.newOrder.shipping);
+
   }
 
   ngOnInit(): void {
@@ -72,83 +66,97 @@ export class OrderSummaryComponent implements OnInit {
   }
 
   submitOrder() {
-    fetch('http://localhost:3000/tax')
-      .then(res => res.json())
-      .then(taxRes => {
-        const taxAmount = this.newOrder.price * taxRes.tax.amount;
-        this.newOrder.tax = taxRes.tax.amount * 100;
-        this.newOrder.shipping.cost = this.newOrder.shipping.cost || 0;
+    const taxRate = 10;
 
-        const total = this.newOrder.price + taxAmount + this.newOrder.shipping.cost;
+    const subtotal = this.newOrder.items.reduce(
+      (sum, item) => sum + item.price * item.qty,
+      0
+    );
 
-        const orderToSend = {
-          customer_name: this.newOrder.customer_name,
-          total_amount: total,
-          tax: this.newOrder.tax,
-          shipping: this.newOrder.shipping
-        };
+    const taxAmount = (subtotal * taxRate) / 100;
 
-        return fetch('http://localhost:3000/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderToSend)
-        });
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to add order');
-        return res.json();
-      })
-      .then(() => {
-        this.fetchOrders();
-        this.resetForm();
-      })
-      .catch(err => console.error('Sending error:', err));
+    const shippingTotal = this.newOrder.items.reduce(
+      (sum, item) => sum + item.shipping,
+      0
+    );
+
+    const total = subtotal + taxAmount + shippingTotal;
+
+    const payload = {
+      customer_name: this.newOrder.shipping.name,
+      total_amount: total,
+      tax: taxRate,
+      shipping: this.newOrder.shipping,
+      items: this.newOrder.items
+    };
+
+    this.summaryService.addOrder(payload).subscribe(() => {
+      this.fetchOrders();
+      this.resetForm();
+    });
   }
 
+
+
   fetchOrders() {
-    fetch('http://localhost:3000/orders')
+    fetch(`${baseApiUrl}/orders`)
       .then(res => res.json())
       .then(data => {
         this.orders = data;
       })
-      .catch(err => console.error('Taking error:', err));
+      .catch(err => console.error('Fetching error:', err));
   }
 
   resetForm() {
-    this.newOrder = {
-      customer_name: '',
-      price: 0,
-      tax: 0,
-      shipping: {
-        carrier: '',
-        cost: 0,
-        address: {
-          name: '',
-          phone: '',
-          address_line1: '',
-          city_locality: '',
-          state_province: '',
-          postal_code: '',
-          country_code: ''
-        }
-      },
-      items: [
-        {
-          id: 1,
-          name: 'Default Product',
-          price: 0,
-          qty: 1,
-          weight: 1
-        }
-      ]
-    };
-  }
+  this.newOrder = {
+    tax: 10,
+    shipping: {
+      carrier: '',
+       name: '',
+      address: {
+        phone: '',
+        address_line1: '',
+        city_locality: '',
+        state_province: '',
+        postal_code: '',
+        country_code: ''
+      }
+    },
+    items: [
+      {
+        id: 1,
+        name: '',
+        price: 0,
+        qty: 1,
+        weight: 1,
+        shipping: 0
+      }
+    ]
+  };
+}
 
   deleteOrder(id: number) {
-    fetch(`http://localhost:3000/orders/${id}`, {
+    fetch(`${baseApiUrl}/orders/${id}`, {
       method: 'DELETE'
     })
       .then(() => this.fetchOrders())
       .catch(err => console.error('Deleting error:', err));
+  }
+
+  addItem() {
+    this.newOrder.items.push({
+      id: this.newOrder.items.length + 1,
+      name: '',
+      price: 0,
+      qty: 1,
+      weight: 1,
+      shipping: 0
+    });
+  }
+
+  removeItem(index: number) {
+    if (this.newOrder.items.length > 1) {
+      this.newOrder.items.splice(index, 1);
+    }
   }
 }

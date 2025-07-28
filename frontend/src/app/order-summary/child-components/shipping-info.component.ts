@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ShippingInfo } from '../services/shipping.service';
+import { ShippingInfo } from '../../services/shipping.service';
 
 @Component({
   selector: 'app-shipping-info',
@@ -18,7 +18,7 @@ import { ShippingInfo } from '../services/shipping.service';
 
       <div style="margin-bottom: 10px;">
         <label>Receiver Name</label>
-        <input [(ngModel)]="shipping.address.name" name="receiver_name" class="form-control" />
+        <input [(ngModel)]="shipping.name" name="receiver_name" class="form-control" />
       </div>
 
       <div style="margin-bottom: 10px;">
