@@ -16,7 +16,6 @@ export interface OrderSummary {
   providedIn: 'root',
 })
 export class OrderSummaryService {
-
   constructor(
     private orderService: OrderService,
     private http: HttpClient,
@@ -28,25 +27,23 @@ export class OrderSummaryService {
     return this.http.post(`${baseApiUrl}/orders`, order);
   }
 
-
-
-
   getOrderSummary(shippingData: ShippingInfo): Observable<OrderSummary> {
-  return this.orderService.getOrder().pipe(
-    switchMap((orderResponse) => {
-      const totalWeight = orderResponse.reduce((sum, item) => sum + item.weight * item.qty, 0);
+    return this.orderService.getOrder().pipe(
+      switchMap((orderResponse) => {
+        const totalWeight = orderResponse.reduce(
+          (sum, item) => sum + item.weight * item.qty,
+          0
+        );
 
-      return forkJoin({
-        shipping: this.shippingService.postShipping(shippingData).pipe(map(res => res.shipping)),
-        tax: this.taxService.getTax().pipe(map(res => res.tax))
-      }).pipe(
-        map(({ shipping, tax }) => {
-          return { order: orderResponse, shipping, tax };
-        })
-      );
-    })
-  );
-}
-
-
+        return forkJoin({
+          shipping: this.shippingService.postShipping(shippingData).pipe(map(res => res.shipping)),
+          tax: this.taxService.getTax().pipe(map(res => res.tax))
+        }).pipe(
+          map(({ shipping, tax }) => {
+            return { order: orderResponse, shipping, tax };
+          })
+        );
+      })
+    );
+  }
 }

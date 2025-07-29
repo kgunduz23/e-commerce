@@ -14,10 +14,8 @@ const pool = new Pool({
   port: 5432
 });
 
-let latestShipping = null;
 app.post('/shipping', (req, res) => {
-  latestShipping = req.body;
-  res.json({ message: 'Shipping info received', shipping: latestShipping });
+  res.json({ message: 'Shipping info received', shipping: req.body });
 });
 
 app.get('/shipping', async (req, res) => {
@@ -53,10 +51,8 @@ app.get('/shipping', async (req, res) => {
   }
 });
 
-
-
 app.post('/orders', async (req, res) => {
-  const { customer_name, total_amount, tax, shipping } = req.body;
+  const { customer_name, total_amount, tax, shipping, items } = req.body;
 
   const client = await pool.connect();
   try {
@@ -70,22 +66,32 @@ app.post('/orders', async (req, res) => {
 
     const orderId = orderResult.rows[0].id;
 
-    await client.query(
-      `INSERT INTO shipping 
-        (order_id, carrier, name, phone, address_line1, city_locality, state_province, postal_code, country_code)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [
-        orderId,
-        shipping.carrier,
-        shipping.name,
-        shipping.address.phone,
-        shipping.address.address_line1,
-        shipping.address.city_locality,
-        shipping.address.state_province,
-        shipping.address.postal_code,
-        shipping.address.country_code,
-      ]
-    );
+    const totalWeight = items.reduce((sum, item) => sum + item.weight * item.qty, 0);
+
+    let multiplier = 1;
+    if (totalWeight >= 5 && totalWeight < 10) multiplier = 2;
+    else if (totalWeight >= 10 && totalWeight < 15) multiplier = 3;
+    else if (totalWeight >= 15 && totalWeight < 20) multiplier = 4;
+    else if (totalWeight >= 20) multiplier = 5;
+
+
+   await client.query(
+    `INSERT INTO shipping 
+      (order_id, carrier, name, phone, address_line1, city_locality, state_province, postal_code, country_code)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [
+      orderId,
+      shipping.carrier,
+      shipping.name,
+      shipping.address.phone,
+      shipping.address.address_line1,
+      shipping.address.city_locality,
+      shipping.address.state_province,
+      shipping.address.postal_code,
+      shipping.address.country_code
+    ]
+  );
+
 
     await client.query('COMMIT');
     res.status(201).json({ success: true, orderId });
@@ -104,7 +110,7 @@ app.get('/orders', async (req, res) => {
       SELECT 
         o.id, o.customer_name, o.total_amount, o.tax,
         s.carrier, s.name AS shipping_name, s.phone, s.address_line1,
-        s.city_locality, s.state_province, s.postal_code, s.country_code, s.cost AS shipping_cost
+        s.city_locality, s.state_province, s.postal_code, s.country_code
       FROM orders o
       LEFT JOIN shipping s ON o.id = s.order_id
     `);
@@ -137,9 +143,6 @@ app.get('/tax', async (req, res) => {
     res.status(500).send('Tax fetch error');
   }
 });
-
-
-
 
 app.listen(3000, () => {
   console.log('✅ Server running on http://localhost:3000');

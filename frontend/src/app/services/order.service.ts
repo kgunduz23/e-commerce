@@ -9,22 +9,29 @@ export interface OrderItem {
   price: number;
   qty: number;
   weight: number;
-  shipping: number; 
-
+  shipping: number;
 }
+
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = `${baseApiUrl}/orders`; 
- 
+  private apiUrl = `${baseApiUrl}/orders`;
+
   constructor(private http: HttpClient) {}
 
   getOrder(): Observable<OrderItem[]> {
     return this.http.get<OrderItem[]>(this.apiUrl);
   }
 
-  deleteOrder(id: number) {
-    return this.http.delete(`${baseApiUrl}/orders/${id}`);
+  getAllOrders(): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl, {
+      headers: { 'Cache-Control': 'no-cache' } 
+    });
   }
+
+  deleteOrder(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
+}
+
 }
