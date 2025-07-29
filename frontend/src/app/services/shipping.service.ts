@@ -26,8 +26,8 @@ export class ShippingService {
   constructor(private http: HttpClient) {}
 
   postShipping(shippingData: any): Observable<any> {
-  return this.http.post(`${baseApiUrl}/shipping`, shippingData);
-}
+    return this.http.post(`${baseApiUrl}/shipping`, shippingData);
+  }
 
 
 }

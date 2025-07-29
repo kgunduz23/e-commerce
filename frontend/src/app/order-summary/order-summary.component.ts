@@ -8,7 +8,6 @@ import { OrderItem, OrderService } from '../services/order.service';
 import { OrderDetailsComponent } from './child-components/order-details.component';
 import { ShippingInfoComponent } from './child-components/shipping-info.component';
 import { TaxInfoComponent } from './child-components/tax-info.component';
-import { baseApiUrl } from '../../env';
 
 @Component({
   selector: 'app-order-summary',
@@ -55,14 +54,35 @@ export class OrderSummaryComponent implements OnInit {
 
   constructor(
     private summaryService: OrderSummaryService,
+    private orderService: OrderService
   ) {
     this.orderSummary$ = this.summaryService.getOrderSummary(this.newOrder.shipping);
-
   }
 
   ngOnInit(): void {
-    this.fetchOrders();
+    this.loadOrders();
     this.resetForm();
+  }
+
+  loadOrders() {
+    this.orderService.getAllOrders().subscribe({
+      next: (data) => this.orders = data,
+      error: (err) => console.error('Fetching error:', err)
+    });
+  }
+
+  getShippingMultiplier(): number {
+    const totalWeight = this.newOrder.items.reduce((sum, item) => sum + item.weight, 0);
+    if (totalWeight >= 5 && totalWeight < 10) return 2;
+    if (totalWeight >= 10 && totalWeight < 15) return 3;
+    if (totalWeight >= 15 && totalWeight < 20) return 4;
+    if (totalWeight >= 20) return 5;
+    return 1;
+  }
+
+  getTotalShippingCost(): number {
+    const enteredShipping = this.newOrder.items.reduce((sum, item) => sum + item.shipping, 0);
+    return enteredShipping * this.getShippingMultiplier();
   }
 
   submitOrder() {
@@ -74,89 +94,65 @@ export class OrderSummaryComponent implements OnInit {
     );
 
     const taxAmount = (subtotal * taxRate) / 100;
-
-    const shippingTotal = this.newOrder.items.reduce(
-      (sum, item) => sum + item.shipping,
-      0
-    );
-
+    const shippingTotal = this.getTotalShippingCost();
     const total = subtotal + taxAmount + shippingTotal;
 
+    const { carrier, name, address } = this.newOrder.shipping;
+
     const payload = {
-      customer_name: this.newOrder.shipping.name,
+      customer_name: name,
       total_amount: total,
       tax: taxRate,
-      shipping: this.newOrder.shipping,
+      shipping: {
+        carrier,
+        name,
+        address  
+      },
       items: this.newOrder.items
     };
 
+
     this.summaryService.addOrder(payload).subscribe(() => {
-      this.fetchOrders();
+      this.loadOrders();
       this.resetForm();
     });
   }
 
-
-
-  fetchOrders() {
-    fetch(`${baseApiUrl}/orders`)
-      .then(res => res.json())
-      .then(data => {
-        this.orders = data;
-      })
-      .catch(err => console.error('Fetching error:', err));
-  }
-
-  resetForm() {
-  this.newOrder = {
-    tax: 10,
-    shipping: {
-      carrier: '',
-       name: '',
-      address: {
-        phone: '',
-        address_line1: '',
-        city_locality: '',
-        state_province: '',
-        postal_code: '',
-        country_code: ''
+  deleteOrder(id: number): void {
+    this.orderService.deleteOrder(id).subscribe({
+      next: () => {
+        this.orders = this.orders.filter(order => order.id !== id); 
+      },
+      error: (err) => {
+        console.error('Delete failed:', err);
       }
-    },
-    items: [
-      {
-        id: 1,
-        name: '',
-        price: 0,
-        qty: 1,
-        weight: 1,
-        shipping: 0
-      }
-    ]
-  };
-}
-
-  deleteOrder(id: number) {
-    fetch(`${baseApiUrl}/orders/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => this.fetchOrders())
-      .catch(err => console.error('Deleting error:', err));
-  }
-
-  addItem() {
-    this.newOrder.items.push({
-      id: this.newOrder.items.length + 1,
-      name: '',
-      price: 0,
-      qty: 1,
-      weight: 1,
-      shipping: 0
     });
   }
-
-  removeItem(index: number) {
-    if (this.newOrder.items.length > 1) {
-      this.newOrder.items.splice(index, 1);
-    }
+  resetForm() {
+    this.newOrder = {
+      tax: 10,
+      shipping: {
+        carrier: '',
+        name: '',
+        address: {
+          phone: '',
+          address_line1: '',
+          city_locality: '',
+          state_province: '',
+          postal_code: '',
+          country_code: ''
+        }
+      },
+      items: [
+        {
+          id: 1,
+          name: '',
+          price: 0,
+          qty: 1,
+          weight: 1,
+          shipping: 0
+        }
+      ]
+    };
   }
 }
