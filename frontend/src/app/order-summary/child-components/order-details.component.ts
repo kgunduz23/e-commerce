@@ -10,7 +10,7 @@ import { OrderItem } from '../../services/order.service';
     <h3>Order Details</h3>
     <ul>
       <li *ngFor="let item of order">
-        {{ item.name }} x{{ item.qty }} - {{ item.price | currency }}
+        {{ item.item_name }} x{{ item.quantity }} - {{ item.total_amount | currency }}
       </li>
     </ul>
     <div>Subtotal: {{ calculateSubtotal() | currency }}</div>
@@ -20,6 +20,6 @@ export class OrderDetailsComponent {
   @Input() order: OrderItem[] = [];
 
   calculateSubtotal(): number {
-    return this.order.reduce((sum, item) => sum + item.price * item.qty, 0);
+    return this.order.reduce((sum, item) => sum + item.total_amount * item.quantity, 0);
   }
 }

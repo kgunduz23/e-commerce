@@ -3,10 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { baseApiUrl } from '../../env';
 
-
 export interface ShippingInfo {
   carrier: string;
-  name:string
+  name: string;
+  base_shipping: number;
   address: {
     phone: string;
     address_line1: string;
@@ -26,8 +26,10 @@ export class ShippingService {
   constructor(private http: HttpClient) {}
 
   postShipping(shippingData: any): Observable<any> {
-    return this.http.post(`${baseApiUrl}/shipping`, shippingData);
+    return this.http.post(this.apiUrl, shippingData);
   }
 
-
+  getLatestShipping(): Observable<any> {
+    return this.http.get(this.apiUrl);
+  }
 }

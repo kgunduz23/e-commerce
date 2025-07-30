@@ -1,44 +1,44 @@
-<h3 style="text-align: center;">Add New Order</h3>
+<h3 style="text-align: center;">{{ 'Add New Order' | titleUppercase }}</h3>
 
 <form (ngSubmit)="submitOrder()" style="width: 500px; margin: auto;">
 
-  <app-shipping-info [shipping]="newOrder.shipping"></app-shipping-info>
+  <app-shipping-info [shipping]="shippingInfo"></app-shipping-info>
+
+  <button type="button"
+          (click)="submitShipping()"
+          style="margin-bottom: 15px; background-color: #007bff; color: white; border: none; padding: 8px 14px; border-radius: 5px; width: 100%;">
+    Save Shipping Info
+  </button>
 
   <app-tax-info [tax]="{ amount: 0.1 }"></app-tax-info>
 
-  <h4 style="margin-top: 20px;">Order Items</h4>
+  <h4 style="margin-top: 60px;">{{ 'Order Item' | titleUppercase }}</h4>
 
   <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
     <div class="form-group">
       <label>Name:</label>
-      <input [(ngModel)]="newOrder.items[0].name" name="item_name" required class="form-control" />
+      <input [(ngModel)]="orderInfo.item_name" name="item_name" required class="form-control" />
     </div>
 
     <div class="form-group">
       <label>Quantity:</label>
-      <input [(ngModel)]="newOrder.items[0].qty" name="item_qty" type="number" min="1" required class="form-control" />
+      <input [(ngModel)]="orderInfo.quantity" name="item_qty" type="number" min="1" required class="form-control" />
     </div>
 
     <div class="form-group">
       <label>Price:</label>
-      <input [(ngModel)]="newOrder.items[0].price" name="item_price" type="number" min="0" required class="form-control" />
+      <input [(ngModel)]="orderInfo.price" name="item_price" type="number" min="0" required class="form-control" />
     </div>
 
     <div class="form-group">
-      <label>Shipping:</label>
-      <input [(ngModel)]="newOrder.items[0].shipping" name="item_shipping" type="number" min="0" required class="form-control" />
-    </div>
-
-    <div class="form-group">
-      <label>Weight:</label>
-      <input [(ngModel)]="newOrder.items[0].weight" name="item_weight" type="number" min="0" required class="form-control" />
+      <label>Weight (kg):</label>
+      <input [(ngModel)]="orderInfo.weight" name="item_weight" type="number" min="0" required class="form-control" />
     </div>
   </div>
 
- 
-  <div style="background-color: #f0f8ff; padding: 10px; margin-top: 10px; border-radius: 6px;">
-    <strong>Shipping Multiplier Rules:</strong><br>
-    <ul style="padding-left: 20px; margin: 5px 0;">
+  <div style="background-color: #f0f8ff; padding: 10px; margin-top: 30px; border-radius:6px;">
+    <strong>{{ 'Shipping Multiplier Rules' | titleUppercase }}</strong><br>
+    <ul style="padding-left: 5px; margin: 20px 0;">
       <li>0 – 5 kg → x1</li>
       <li>5 – 10 kg → x2</li>
       <li>10 – 15 kg → x3</li>
@@ -47,28 +47,28 @@
     </ul>
     <div>
       <strong>Shipping Cost:</strong>
-      {{ newOrder.items[0].shipping }} × {{ getShippingMultiplier() }} = 
-      {{ getTotalShippingCost() | currency }}
+      {{ getShippingMultiplier() }} × {{ shippingInfo.base_shipping }} = {{ getTotalShippingCost() | currency }}
     </div>
   </div>
 
   <button type="submit"
-    style="margin-top: 20px; background-color: green; color: white; border: none; padding: 10px 16px; border-radius: 5px; width: 100%;">
+          style="margin-top: 20px; background-color: green; color: white; border: none; padding: 10px 16px; border-radius: 5px; width: 100%;">
     Add Order
   </button>
 </form>
 
 <hr>
 
-<h3 style="text-align: center;">Orders</h3>
+<h3 style="text-align: center;">{{ 'Orders' | titleUppercase }}</h3>
 
 <ul style="list-style: none; padding: 0; width: 500px; margin: auto;">
-  <li *ngFor="let o of orders"
+  <li *ngFor="let o of orders$ | async"
       style="background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
     <div>
-      <strong>{{ o.customer_name }}</strong><br>
+      <strong>{{ o.item_name }}</strong><br>
+      Quantity: {{ o.quantity }}<br>
+      <span style="margin-right: 12px;">Weight: {{ o.weight | weight }}</span>
       Total: {{ o.total_amount | currency }}<br>
-      Tax: 10%<br>
     </div>
     <button (click)="deleteOrder(o.id)"
             style="margin-top: 5px; background-color: #d9534f; color: white; border: none; padding: 5px 10px; border-radius: 3px;">
