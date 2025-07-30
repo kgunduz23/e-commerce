@@ -5,11 +5,10 @@ import { baseApiUrl } from '../../env';
 
 export interface OrderItem {
   id: number;
-  name: string;
-  price: number;
-  qty: number;
+  item_name: string;
+  quantity: number;
   weight: number;
-  shipping: number;
+  total_amount: number;
 }
 
 @Injectable({
@@ -24,14 +23,18 @@ export class OrderService {
     return this.http.get<OrderItem[]>(this.apiUrl);
   }
 
-  getAllOrders(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl, {
-      headers: { 'Cache-Control': 'no-cache' } 
+  getAllOrders(): Observable<OrderItem[]> {
+    return this.http.get<OrderItem[]>(this.apiUrl, {
+      headers: { 'Cache-Control': 'no-cache' }
     });
   }
 
-  deleteOrder(id: number): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
-}
 
+  addOrder(order: any): Observable<any> {
+    return this.http.post(`${baseApiUrl}/orders`, order);
+  }
+
+  deleteOrder(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
+  }
 }
